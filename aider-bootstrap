@@ -1,0 +1,27 @@
+#!/bin/sh
+
+dir=$(dirname "$( readlink -f "$0" )" )
+
+list_templates() {
+  echo
+  echo "Templates you can use:"
+  find "$dir" -name '*.md' ! -name '.*' -exec basename {} \; | sed 's/\.md$//' | sed 's/^/- /'
+  echo
+  echo "(loaded from $dir)"
+}
+
+conventionfile=$1
+if [ "$1" = "" ]
+then
+  echo "Usage: aider-bootstrap BOOTSTRAP-TEMPLATE-NAME Your prompt for the thing you want aider to create goes here..."
+  list_templates
+elif [ ! -f "$dir/$conventionfile.md" ]
+then
+  echo "Error: The specified convention file '$conventionfile.md' does not exist."
+  list_templates
+else
+  shift # remove the conventionfile arg
+  prompt="'$*'"
+  aider --message "$prompt" --no-git --read "$dir/$conventionfile.md"
+  awk '/^# SETUP/{exit} {print}' "$dir/$conventionfile.md" > CONVENTION.md
+fi
